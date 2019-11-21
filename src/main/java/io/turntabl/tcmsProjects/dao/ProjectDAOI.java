@@ -31,7 +31,7 @@ public class ProjectDAOI implements ProjectDAO{
     public List<ProjectTO> getAllProjects() {
         return jdbcTemplate.query("select * from projects", BeanPropertyRowMapper.newInstance(ProjectTO.class));
     }
-    @ApiOperation("Get by name")
+    @ApiOperation("Get Project by name")
     @GetMapping("/api/v1/projectbyname")
     @Override
     public List<ProjectTO> searchProjectByName(String project_name) {
@@ -40,18 +40,26 @@ public class ProjectDAOI implements ProjectDAO{
                 new BeanPropertyRowMapper<ProjectTO>(ProjectTO.class));
     }
 
+    @ApiOperation("Add a new project")
+    @GetMapping("/api/v1/newproject")
     @Override
-    public void addNewProject() {
+    public void addNewProject(ProjectTO project) {
+                this.jdbcTemplate.update(
+                "insert into projects(project_id, project_name, project_description) values(?,?,?)", project.getProject_id(), project.getProject_name(), project.getProject_description());
 
     }
-
+    @ApiOperation("Update a project")
+    @GetMapping("/api/v1/projectupdate")
     @Override
-    public void updateProjectInfo() {
-
+    public void updateProjectInfo(ProjectTO project) {
+        this.jdbcTemplate.update(
+                "update projects set project_name = ?, project_description = ? where project_id = ?", project.getProject_name(), project.getProject_description(), project.getProject_id());
     }
 
+    @ApiOperation("delete a project")
+    @GetMapping("/api/v1/projectdelete")
     @Override
-    public void deleteProjectById(int id) {
-
+    public void deleteProjectById(ProjectTO project) {
+        this.jdbcTemplate.update("delete from projects where project_id = ?", project.getProject_id());
     }
 }
