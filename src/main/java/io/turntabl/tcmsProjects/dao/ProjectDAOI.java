@@ -2,6 +2,8 @@ package io.turntabl.tcmsProjects.dao;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.turntabl.tcmsProjects.extra.DBVariables;
+import io.turntabl.tcmsProjects.pubsub.Publisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -28,12 +30,13 @@ public class ProjectDAOI implements ProjectDAO{
     @GetMapping("/api/v1/projects")
     @Override
     public List<ProjectTO> getAllProjects() {
-        return jdbcTemplate.query("select * from projects", BeanPropertyRowMapper.newInstance(ProjectTO.class));
+        return jdbcTemplate.query(DBVariables.GET_ALL_PROJECTS, BeanPropertyRowMapper.newInstance(ProjectTO.class));
     }
     @ApiOperation("Get Project by name")
     @GetMapping("/api/v1/projects/search")
     @Override
     public List<ProjectTO> searchProjectByName(@RequestParam(value = "project_name") String project_name) {
+        Publisher.publis("projects", "Searched for project: " + project_name);
         return this.jdbcTemplate.query(
                 "select * from projects where project_name like '%"+project_name+"%'",
                 new BeanPropertyRowMapper<ProjectTO>(ProjectTO.class));
@@ -43,22 +46,24 @@ public class ProjectDAOI implements ProjectDAO{
     @PostMapping("/api/v1/projects")
     @Override
     public void addNewProject(ProjectTO project) {
-                this.jdbcTemplate.update(
-                "insert into projects(project_id, project_name, project_description) values(?,?,?)", project.getProject_id(), project.getProject_name(), project.getProject_description());
-
+        this.jdbcTemplate.update(
+                DBVariables.ADD_NEW_PROJECT, project.getProject_id(), project.getProject_name(), project.getProject_description());
+        Publisher.publis("new_project", "Added new Project " + project.getProject_name());
     }
     @ApiOperation("Update a project")
     @PutMapping("/api/v1/projects/{id}")
     @Override
     public void updateProjectInfo(@PathVariable("id") Integer id, ProjectTO project) {
         this.jdbcTemplate.update(
-                "update projects set project_name = ?, project_description = ? where project_id = ?", project.getProject_name(), project.getProject_description(), project.getProject_id());
+                DBVariables.UPDATE_PROJECT, project.getProject_name(), project.getProject_description(), project.getProject_id());
+        Publisher.publis("update", "Updated a Project with id " + id);
     }
 
     @ApiOperation("delete a project")
     @DeleteMapping("/api/v1/projects/{id}")
     @Override
     public void deleteProjectById(@PathVariable("id") Integer id) {
-        this.jdbcTemplate.update("delete from projects where project_id = ?", id);
+        this.jdbcTemplate.update(DBVariables.DELETE_PROJECT, id);
+        Publisher.publis("remove", "Removed a Project with id " + id);
     }
 }
